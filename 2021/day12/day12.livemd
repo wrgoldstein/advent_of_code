@@ -1,0 +1,100 @@
+# Day 12
+
+## Part 1
+
+```elixir
+input = "6,10
+0,14
+9,10
+0,3
+10,4
+4,11
+6,0
+6,12
+4,1
+0,13
+10,12
+3,4
+3,0
+8,4
+1,10
+2,14
+8,10
+9,0
+
+fold along y=7
+fold along x=5"
+
+[dots, folds] = String.split(input, "\n\n")
+dots = dots |> String.split(["\n", ","]) |> Enum.map(&String.to_integer/1) |> Enum.chunk_every(2)
+folds
+```
+
+```elixir
+reflect_y = fn dots, pivot ->
+  dots
+  |> Enum.map(fn [x, y] ->
+    if y < pivot do
+      [x, y]
+    else
+      [x, y - 2 * abs(pivot - y)]
+    end
+  end)
+  |> Enum.uniq()
+end
+
+reflect_x = fn dots, pivot ->
+  dots
+  |> Enum.map(fn [x, y] ->
+    if x < pivot do
+      [x, y]
+    else
+      [x - 2 * abs(pivot - x), y]
+    end
+  end)
+  |> Enum.uniq()
+end
+```
+
+```elixir
+input = File.read!("day12/input.txt")
+[dots, folds] = String.split(input, "\n\n")
+dots = dots |> String.split(["\n", ","]) |> Enum.map(&String.to_integer/1) |> Enum.chunk_every(2)
+IO.puts(folds)
+```
+
+```elixir
+input = File.read!("day12/input.txt")
+[dots, folds] = String.split(input, "\n\n")
+dots = dots |> String.split(["\n", ","]) |> Enum.map(&String.to_integer/1) |> Enum.chunk_every(2)
+folds = folds |> String.split(["\n", ","])
+reflect_x.(dots, 655) |> Enum.count()
+```
+
+```elixir
+dots =
+  reflect_x.(dots, 655)
+  |> reflect_y.(447)
+  |> reflect_x.(327)
+  |> reflect_y.(223)
+  |> reflect_x.(163)
+  |> reflect_y.(111)
+  |> reflect_x.(81)
+  |> reflect_y.(55)
+  |> reflect_x.(40)
+  |> reflect_y.(27)
+  |> reflect_y.(13)
+  |> reflect_y.(6)
+```
+
+```elixir
+[x, y] = Enum.zip(dots) |> Enum.map(fn t -> Tuple.to_list(t) end) |> Enum.map(&Enum.max/1)
+board = for j <- 0..y, do: for(i <- 0..x, do: if([i, j] in dots, do: "#", else: "."))
+
+board
+|> Enum.map(fn row -> Enum.join(row, "") end)
+|> Enum.join("\n")
+|> IO.puts()
+```
+
+PGHZBFJC

@@ -1,0 +1,216 @@
+# Day 4
+
+## Part 1
+
+```elixir
+Mix.install([:httpoison])
+```
+
+```elixir
+defmodule Day4 do
+  def winning_board?(board) do
+    rows =
+      for(i <- 0..20//5, do: i)
+      |> Enum.map(fn start ->
+        Enum.slice(board, start, 5)
+      end)
+
+    # columns
+    columns =
+      0..4
+      |> Enum.map(fn start ->
+        Enum.with_index(board)
+        |> Enum.filter(fn {_, i} -> rem(i, 5) == start end)
+        |> Enum.map(fn {el, _} -> el end)
+      end)
+
+    Enum.any?(rows ++ columns, &Day4.winning_row?/1)
+  end
+
+  def recurse([just_called | numbers], boards) do
+    boards =
+      boards
+      |> Enum.map(fn board ->
+        Enum.map(board, fn
+          ^just_called -> nil
+          x -> x
+        end)
+      end)
+
+    winning_boards = Enum.filter(boards, &Day4.winning_board?/1)
+
+    if Enum.any?(winning_boards) do
+      [winning_board] = winning_boards
+
+      sum =
+        winning_board
+        |> Enum.filter(fn
+          nil -> false
+          _ -> true
+        end)
+        |> Enum.map(&String.to_integer/1)
+        |> Enum.sum()
+
+      sum * String.to_integer(just_called)
+    else
+      recurse(numbers, boards)
+    end
+  end
+
+  def winning_row?(row) do
+    Enum.all?(row, fn
+      nil -> true
+      _ -> false
+    end)
+  end
+end
+```
+
+```elixir
+sample_input = "
+7,4,9,5,11,17,23,2,0,14,21,24,10,16,13,6,15,25,12,22,18,20,8,19,3,26,1
+
+22 13 17 11  0
+ 8  2 23  4 24
+21  9 14 16  7
+ 6 10  3 18  5
+ 1 12 20 15 19
+
+ 3 15  0  2 22
+ 9 18 13 17  5
+19  8  7 25 23
+20 11 10 24  4
+14 21 16 12  6
+
+14 21 17 24  4
+10 16 15  9 19
+18  8 23 26 20
+22 11 13  6  5
+ 2  0 12  3  7
+ " |> String.trim() |> String.split("\n\n")
+
+[numbers | boards] = sample_input
+numbers = String.split(numbers, ",")
+
+boards =
+  boards
+  |> Enum.map(fn board ->
+    String.split(board, "\n")
+    |> Enum.flat_map(fn row -> String.split(row) end)
+  end)
+
+[numbers, boards]
+```
+
+```elixir
+require HTTPoison
+
+url = "https://adventofcode.com/2021/day/4/input"
+
+cookie =
+  "_ga=GA1.2.648359719.1638387579; _gid=GA1.2.1442344881.1638387579; session=53616c7465645f5f633f6407b041e04200a5218c6b15131c81e15c83e805325e22b436ec4d4b735352e7c4c4c096ee3f"
+
+headers = [{"Cookie", cookie}]
+{:ok, res} = HTTPoison.get(url, headers)
+
+real_input = res.body |> String.trim() |> String.split("\n\n")
+
+[numbers | boards] = real_input
+numbers = String.split(numbers, ",")
+
+boards =
+  boards
+  |> Enum.map(fn board ->
+    String.split(board, "\n")
+    |> Enum.flat_map(fn row -> String.split(row) end)
+  end)
+```
+
+```elixir
+Day4.recurse(numbers, boards)
+```
+
+## Part 2
+
+```elixir
+defmodule Day4 do
+  def winning_board?(board) do
+    rows =
+      for(i <- 0..20//5, do: i)
+      |> Enum.map(fn start ->
+        Enum.slice(board, start, 5)
+      end)
+
+    # columns
+    columns =
+      0..4
+      |> Enum.map(fn start ->
+        Enum.with_index(board)
+        |> Enum.filter(fn {_, i} -> rem(i, 5) == start end)
+        |> Enum.map(fn {el, _} -> el end)
+      end)
+
+    Enum.any?(rows ++ columns, &Day4.winning_row?/1)
+  end
+
+  def recurse([just_called | numbers], boards) do
+    boards =
+      boards
+      |> Enum.map(fn board ->
+        Enum.map(board, fn
+          ^just_called -> nil
+          other -> other
+        end)
+      end)
+
+    {winning_boards, other_boards} = Enum.split_with(boards, &Day4.winning_board?/1)
+
+    if Enum.count(other_boards) == 0 do
+      [winning_board] = winning_boards
+
+      sum =
+        winning_board
+        |> Enum.filter(fn
+          nil -> false
+          _ -> true
+        end)
+        |> Enum.map(&String.to_integer/1)
+        |> Enum.sum()
+
+      IO.puts("just called #{just_called}; sum: #{sum}")
+
+      IO.inspect(
+        winning_board
+        |> Enum.chunk_every(5)
+      )
+
+      sum * String.to_integer(just_called)
+    else
+      recurse(numbers, other_boards)
+    end
+  end
+
+  def winning_row?(row) do
+    Enum.all?(row, fn
+      nil -> true
+      _ -> false
+    end)
+  end
+end
+```
+
+```elixir
+Day4.recurse(numbers, boards)
+```
+
+```elixir
+defmodule A do
+  def foo(2) do
+    100
+  end
+
+  def foo(3) do
+    200
+  end
+end
+```

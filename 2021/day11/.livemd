@@ -1,0 +1,65 @@
+# Day 11
+
+## Part 1
+
+```elixir
+input =
+  "
+start-A
+start-b
+A-c
+A-b
+b-d
+A-end
+b-end"
+  |> String.split(["\n", "-"], trim: true)
+  |> Enum.chunk_every(2)
+
+# find every path
+```
+
+```elixir
+input |> Enum.map(&List.to_tuple/1)
+
+# first pass
+## for each path with a 'start': add that path to paths
+
+# second pass
+## starts are done
+## for each path in paths
+##   for each edge in input matching the path end
+## .     add a new longer path with the additional edge 
+##         if it doesn't make the path contain two lowercase caves
+
+# decision: do it all recursively or do a map over everything recursively
+
+defmodule A do
+  def start(input) do
+    paths = Enum.filter(input, fn [a, b] -> a == "start" end)
+    continue(input, paths)
+  end
+
+  def continue(input, paths) do
+    IO.inspect(paths)
+
+    paths =
+      Enum.flat_map(paths, fn path ->
+        ending = Enum.at(path, -1)
+
+        if ending == "end" do
+          path
+        else
+          edges = Enum.filter(input, fn [a, _b] -> a == ending end)
+          Enum.map(edges, fn [_a, b] -> path ++ [b] end)
+        end
+      end)
+
+    if Enum.all?(paths, fn path -> Enum.at(path, -1) == "end" end) do
+      # we're done!
+      "yay"
+    end
+  end
+end
+
+A.start(input)
+```

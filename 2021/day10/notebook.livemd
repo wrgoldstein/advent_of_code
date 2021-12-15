@@ -1,0 +1,212 @@
+# Day 10
+
+## Part 1
+
+```elixir
+input = "5483143223
+2745854711
+5264556173
+6141336146
+6357385478
+4167524645
+2176841721
+6882881134
+4846848554
+5283751526"
+
+input = "8271653836
+7567626775
+2315713316
+6542655315
+2453637333
+1247264328
+2325146614
+2115843171
+6182376282
+2384738675"
+
+integers =
+  input
+  |> String.split("\n")
+  |> Enum.map(fn x -> String.graphemes(x) |> Enum.map(&String.to_integer/1) end)
+
+[sample | _] = integers
+len = length(sample)
+```
+
+```elixir
+flashes = 0
+flat = integers |> Enum.flat_map(& &1) |> Enum.with_index()
+total = length(flat)
+
+neighbors =
+  Enum.map(flat, fn {_x, i} ->
+    up = if i < len, do: nil, else: i - len
+    left = if rem(i, len) == 0, do: nil, else: i - 1
+    right = if rem(i, len) == len - 1, do: nil, else: i + 1
+    down = if i + len >= total, do: nil, else: i + len
+
+    upleft = if i < len or rem(i, len) == 0, do: nil, else: i - len - 1
+    upright = if i < len or rem(i, len) == len - 1, do: nil, else: i - len + 1
+    downleft = if rem(i, len) == 0 or i + len >= total, do: nil, else: i + len - 1
+    downright = if rem(i, len) == len - 1 or i + len >= total, do: nil, else: i + len + 1
+
+    {i,
+     [up, left, right, down, upleft, upright, downleft, downright] |> Enum.filter(&(!is_nil(&1)))}
+  end)
+  |> Map.new()
+
+"made a map ;)"
+```
+
+```elixir
+defmodule Day10 do
+  def outer(flat, steps, neighbors, total, len) do
+    outer(flat, steps, 0, neighbors, total, len)
+  end
+
+  def outer(_flat, 0, flashes, _, _, _) do
+    flashes
+  end
+
+  def outer(flat, steps, flashes, neighbors, total, len) do
+    # flat
+    #   |> Enum.map(fn {x, i} -> x end)
+    #   |> Enum.chunk_every(len)
+    #   |> IO.inspect
+    # for each octopus, increase energy by 1
+    flat =
+      Enum.map(flat, fn
+        {DIM, i} -> {DIM, i}
+        {x, i} -> {x + 1, i}
+      end)
+
+    inner(flat, steps, flashes, neighbors, total, len)
+  end
+
+  def inner(flat, steps, flashes, neighbors, total, len) do
+    # for each octopus, flash if energy above 9
+    flashes =
+      flashes +
+        Enum.count(flat, fn
+          {DIM, _} -> false
+          {x, _} -> x > 9
+        end)
+
+    # mark flashed octopi
+    flat =
+      Enum.map(flat, fn
+        {DIM, i} -> {DIM, i}
+        {x, i} -> if x > 9, do: {FLASH, i}, else: {x, i}
+      end)
+
+    # for each octopus that flashed, adjust neighbors
+    flash_neighbors =
+      Enum.filter(flat, fn
+        {FLASH, _} -> true
+        _ -> false
+      end)
+      |> Enum.flat_map(fn {_, i} -> neighbors[i] end)
+      |> Enum.frequencies()
+
+    flat =
+      Enum.map(flat, fn
+        {FLASH, i} -> {DIM, i}
+        {DIM, i} -> {DIM, i}
+        {x, i} -> {x + Map.get(flash_neighbors, i, 0), i}
+      end)
+
+    if Enum.any?(flat, fn {x, _i} -> x not in [FLASH, DIM] and x > 9 end) do
+      inner(flat, steps, flashes, neighbors, total, len)
+    else
+      # mark all DIMS as 0s
+      flat =
+        Enum.map(flat, fn
+          {DIM, i} -> {0, i}
+          x -> x
+        end)
+
+      outer(flat, steps - 1, flashes, neighbors, total, len)
+    end
+  end
+end
+
+Day10.outer(flat, 100, neighbors, total, len)
+```
+
+## Part 2
+
+```elixir
+defmodule Day10 do
+  def outer(flat, steps, neighbors, total, len) do
+    outer(flat, steps, 0, neighbors, total, len)
+  end
+
+  def outer(_flat, 0, flashes, _, _, _) do
+    flashes
+  end
+
+  def outer(flat, steps, flashes, neighbors, total, len) do
+    if Enum.all?(flat, fn {x, i} -> x == 0 end) do
+      steps
+    else
+      flat =
+        Enum.map(flat, fn
+          {DIM, i} -> {DIM, i}
+          {x, i} -> {x + 1, i}
+        end)
+
+      inner(flat, steps, flashes, neighbors, total, len)
+    end
+  end
+
+  def inner(flat, steps, flashes, neighbors, total, len) do
+    # for each octopus, flash if energy above 9
+    flashes =
+      flashes +
+        Enum.count(flat, fn
+          {DIM, _} -> false
+          {x, _} -> x > 9
+        end)
+
+    # mark flashed octopi
+    flat =
+      Enum.map(flat, fn
+        {DIM, i} -> {DIM, i}
+        {x, i} -> if x > 9, do: {FLASH, i}, else: {x, i}
+      end)
+
+    # for each octopus that flashed, adjust neighbors
+    flash_neighbors =
+      Enum.filter(flat, fn
+        {FLASH, _} -> true
+        _ -> false
+      end)
+      |> Enum.flat_map(fn {_, i} -> neighbors[i] end)
+      |> Enum.frequencies()
+
+    flat =
+      Enum.map(flat, fn
+        {FLASH, i} -> {DIM, i}
+        {DIM, i} -> {DIM, i}
+        {x, i} -> {x + Map.get(flash_neighbors, i, 0), i}
+      end)
+
+    if Enum.any?(flat, fn {x, _i} -> x not in [FLASH, DIM] and x > 9 end) do
+      inner(flat, steps, flashes, neighbors, total, len)
+    else
+      # mark all DIMS as 0s
+      flat =
+        Enum.map(flat, fn
+          {DIM, i} -> {0, i}
+          x -> x
+        end)
+
+      outer(flat, steps - 1, flashes, neighbors, total, len)
+    end
+  end
+end
+
+s = Day10.outer(flat, 300, neighbors, total, len)
+300 - s
+```

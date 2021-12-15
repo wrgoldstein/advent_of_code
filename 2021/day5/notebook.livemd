@@ -1,0 +1,104 @@
+# Day 5 redo
+
+## Part1
+
+```elixir
+input = "0,9 -> 5,9
+8,0 -> 0,8
+9,4 -> 3,4
+2,2 -> 2,1
+7,0 -> 7,4
+6,4 -> 2,0
+0,9 -> 2,9
+3,4 -> 1,4
+0,0 -> 8,8
+5,5 -> 8,2" |> String.split("\n")
+```
+
+```elixir
+defmodule A do
+  def recur(line_points) do
+    [x1, y1, x2, y2] = line_points
+
+    xd =
+      cond do
+        x1 == x2 -> 0
+        x1 < x2 -> 1
+        x1 > x2 -> -1
+      end
+
+    yd =
+      cond do
+        y1 == y2 -> 0
+        y1 < y2 -> 1
+        y1 > y2 -> -1
+      end
+
+    recur([x1, y1, x2, y2], [], xd, yd)
+  end
+
+  def recur(line_points, acc, xd, yd) do
+    [x1, y1, x2, y2] = line_points
+    acc = [{x1, y1} | acc]
+
+    cond do
+      # x1 == x2 or y1 == y2 -> acc  <--- part 1
+      x1 == x2 and y1 == y2 ->
+        acc
+
+      true ->
+        recur([x1 + xd, y1 + yd, x2, y2], acc, xd, yd)
+    end
+  end
+end
+```
+
+```elixir
+input
+|> Enum.map(fn line_str ->
+  String.split(line_str, " -> ")
+  |> Enum.flat_map(&String.split(&1, ","))
+  |> Enum.map(&String.to_integer/1)
+end)
+|> Enum.map(&A.recur/1)
+|> Enum.reduce(%{}, fn points, acc ->
+  Enum.reduce(points, acc, fn point, acc ->
+    Map.update(acc, point, 1, fn v -> v + 1 end)
+  end)
+end)
+|> Enum.count(fn {_k, v} -> v > 1 end)
+```
+
+```elixir
+Mix.install([:httpoison])
+```
+
+```elixir
+require HTTPoison
+
+url = "https://adventofcode.com/2021/day/5/input"
+
+cookie =
+  "_ga=GA1.2.648359719.1638387579; _gid=GA1.2.1442344881.1638387579; session=53616c7465645f5f633f6407b041e04200a5218c6b15131c81e15c83e805325e22b436ec4d4b735352e7c4c4c096ee3f"
+
+headers = [{"Cookie", cookie}]
+{:ok, res} = HTTPoison.get(url, headers)
+
+input = res.body |> String.trim() |> String.split("\n")
+```
+
+```elixir
+input
+|> Enum.map(fn line_str ->
+  String.split(line_str, " -> ")
+  |> Enum.flat_map(&String.split(&1, ","))
+  |> Enum.map(&String.to_integer/1)
+end)
+|> Enum.map(&A.recur/1)
+|> Enum.reduce(%{}, fn points, acc ->
+  Enum.reduce(points, acc, fn point, acc ->
+    Map.update(acc, point, 1, fn v -> v + 1 end)
+  end)
+end)
+|> Enum.count(fn {_k, v} -> v > 1 end)
+```

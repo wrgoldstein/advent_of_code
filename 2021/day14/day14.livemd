@@ -1,0 +1,90 @@
+# Day 14
+
+## Part 1
+
+```elixir
+input = File.read!("day14/input.txt")
+[root, rules] = input |> String.split("\n\n")
+```
+
+```elixir
+pairs =
+  Enum.chunk_every(to_charlist(root), 2, 1, :discard)
+  |> Enum.map(fn x -> {x, 1} end)
+  |> Map.new()
+
+rules =
+  rules
+  |> String.split(["\n", " -> "])
+  |> Enum.map(&to_charlist/1)
+  |> Enum.chunk_every(2)
+  |> Enum.map(&List.to_tuple/1)
+  |> Map.new()
+
+pairs
+```
+
+```elixir
+defmodule Day14 do
+  def polymerize(rules, pairs) do
+    Enum.reduce(pairs, %{}, fn {k, v}, acc ->
+      if Map.has_key?(rules, k) do
+        # you get an extra pair each side
+        to_insert = Map.get(rules, k) |> hd
+        [a, b] = k
+
+        Enum.reduce([[a, to_insert], [to_insert, b]], acc, fn pair, acc ->
+          Map.update(acc, pair, v, &(&1 + v))
+        end)
+
+        # |> Map.drop([k])
+      else
+        acc
+      end
+    end)
+  end
+
+  def recur(_rules, pairs, 0) do
+    pairs
+  end
+
+  def recur(rules, pairs, steps) do
+    recur(rules, polymerize(rules, pairs), steps - 1)
+  end
+end
+
+# |> Enum.filter(fn {[a,b], k} -> a == 66  or b == 66 end)
+```
+
+```elixir
+# one plus the sum of values
+p = Day14.recur(rules, pairs, 40)
+
+Enum.reduce(p, %{}, fn {[l, r], v}, acc ->
+  a = if l != r, do: %{l => v, r => v}, else: %{l => v * 2}
+  Map.merge(a, acc, fn _, v1, v2 -> v1 + v2 end)
+end)
+|> Map.values()
+|> Enum.sum()
+|> then(fn x -> x / 2 + 1 end)
+
+left = root |> to_charlist |> Enum.at(0)
+right = root |> to_charlist |> Enum.at(-1)
+
+sorted =
+  Enum.reduce(p, %{}, fn {[l, r], v}, acc ->
+    a = if l != r, do: %{l => v, r => v}, else: %{l => v * 2}
+    Map.merge(a, acc, fn _, v1, v2 -> v1 + v2 end)
+  end)
+  |> Enum.map(fn
+    {^left, v} -> (v + 1) / 2
+    {^right, v} -> (v + 1) / 2
+    {other, v} -> v / 2
+  end)
+  |> Enum.sort()
+
+least = hd(sorted)
+most = hd(Enum.reverse(sorted))
+most - least
+```
+

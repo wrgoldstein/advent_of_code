@@ -1,0 +1,158 @@
+# Day 3
+
+## Part 1
+
+```elixir
+Mix.install([:httpoison])
+```
+
+```elixir
+defmodule Converter do
+  def convert(s) do
+    l = String.length(s)
+    pows = 0..(l - 1) |> Enum.map(fn x -> :math.pow(2, x) end) |> Enum.reverse()
+    ints = String.split(s, "") |> Enum.slice(1, l) |> Enum.map(&String.to_integer/1)
+    Enum.zip(ints, pows) |> Enum.map(fn {i, p} -> i * p end) |> Enum.sum()
+  end
+end
+
+input =
+  "00100
+11110
+10110
+10111
+10101
+01111
+00111
+11100
+10000
+11001
+00010
+01010"
+  |> String.split()
+```
+
+```elixir
+require HTTPoison
+
+url = "https://adventofcode.com/2021/day/3/input"
+
+cookie =
+  "_ga=GA1.2.648359719.1638387579; _gid=GA1.2.1442344881.1638387579; session=53616c7465645f5f633f6407b041e04200a5218c6b15131c81e15c83e805325e22b436ec4d4b735352e7c4c4c096ee3f"
+
+headers = [{"Cookie", cookie}]
+{:ok, res} = HTTPoison.get(url, headers)
+
+real_input = res.body |> String.trim() |> String.split("\n")
+```
+
+```elixir
+freq =
+  real_input
+  |> Enum.map(fn x -> String.split(x, "") |> Enum.filter(fn x -> x != "" end) end)
+  |> Enum.zip()
+  |> Enum.map(&Tuple.to_list/1)
+  |> Enum.map(&Enum.frequencies/1)
+  |> Enum.map(fn x ->
+    max = Enum.max_by(x, fn {_, v} -> v end)
+    min = Enum.min_by(x, fn {_, v} -> v end)
+
+    [max, min]
+    |> Enum.map(fn {digit, _} -> digit end)
+    |> then(fn [a, b] -> {a, b} end)
+  end)
+  |> Enum.unzip()
+  |> then(&Tuple.to_list/1)
+  |> Enum.map(&Enum.join/1)
+  |> Enum.map(&Converter.convert/1)
+  |> Enum.product()
+  |> then(&floor/1)
+```
+
+```elixir
+real_input
+```
+
+## Part 2
+
+```elixir
+defmodule Day3 do
+  def recurse([rating], _, _) do
+    rating
+  end
+
+  def recurse(vals, type) do
+    recurse(vals, 0, type)
+  end
+
+  def recurse(vals, pos, type) do
+    bit_condition = Day3.get_bit_condition(vals, pos, type)
+
+    vals
+    |> Enum.filter(fn x ->
+      Enum.at(x, pos) == bit_condition
+    end)
+    |> recurse(pos + 1, type)
+  end
+
+  def get_bit_condition(vals, pos, type) do
+    f = if type == "oxygen", do: &Enum.max_by/2, else: &Enum.min_by/2
+    ties_1 = type == "oxygen"
+
+    vals
+    |> Enum.map(fn x -> Enum.at(x, pos) end)
+    |> then(&Enum.frequencies/1)
+    |> IO.inspect()
+    |> then(fn x ->
+      f.(x, fn {k, v} ->
+        case k do
+          "1" -> if ties_1, do: v + 1, else: v
+          "0" -> v
+        end
+      end)
+    end)
+    |> then(fn {i, _} -> i end)
+  end
+end
+
+oxygen =
+  real_input
+  |> Enum.map(fn x -> String.split(x, "") |> Enum.filter(fn x -> x != "" end) end)
+  |> Day3.recurse("oxygen")
+  |> Enum.join()
+  |> Converter.convert()
+
+scrubber =
+  real_input
+  |> Enum.map(fn x -> String.split(x, "") |> Enum.filter(fn x -> x != "" end) end)
+  |> Day3.recurse("scrubber")
+  |> Enum.join()
+  |> Converter.convert()
+
+floor(oxygen * scrubber)
+```
+
+```elixir
+z = [
+  ["0", "0", "1", "0", "0"],
+  ["1", "1", "1", "1", "0"],
+  ["0", "0", "1", "0", "0"]
+]
+
+Day3.get_bit_condition(z, 0)
+
+# freq = %{"1" => 1, "0" => 1, }
+# Enum.max_by(freq, fn {k, v} -> 
+#   case k do 
+#     "1" -> v + 1
+#     "0" -> v
+#   end
+# end
+# )
+
+# defmodule Foo do
+#   def foo(freq) do
+
+#   end
+# end
+```

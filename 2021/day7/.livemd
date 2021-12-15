@@ -1,0 +1,78 @@
+# Day 7
+
+## Part 1
+
+```elixir
+signals = %{
+  # 7,
+  0 => "abcefg",
+  # 2
+  1 => "cf",
+  2 => "acdeg",
+  3 => "acdfg",
+  4 => "bcdf",
+  5 => "abdfg",
+  6 => "abdefg",
+  7 => "acf",
+  8 => "abcdefg",
+  9 => "abcdfg"
+}
+
+signals = %{
+  "abcefg" => 0,
+  "cf" => 1,
+  "acdeg" => 2,
+  "acdfg" => 3,
+  "bcdf" => 4,
+  "abdfg" => 5,
+  "abdefg" => 6,
+  "acf" => 7,
+  "abcdefg" => 8,
+  "abcdfg" => 9
+}
+```
+
+```elixir
+input = "acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf"
+[patterns_raw, value] = String.split(input, " | ")
+patterns = String.split(patterns_raw)
+pattern = Enum.at(patterns, 4)
+# given patterns, figure out what signals are on
+defmodule A do
+  def find_matches(pattern, signals, set) when is_map(signals) do
+    find_matches(pattern, Map.to_list(signals), set)
+  end
+  def find_matches(pattern, signals, set) when is_list(signals) do
+    Enum.filter(signals, fn {k, _v} ->
+      String.length(pattern) == String.length(k)
+      or
+      MapSet.new(String.to_charlist(k)) == set
+    end)
+  end
+  def recur(patterns, signals) do
+    recur(patterns, signals, MapSet.new)
+  end
+
+  def recur(patterns, signals, set) do
+    pattern = ...?
+    Enum.reduce(patterns, MapSet.new, fn p, set ->
+      
+    end)
+    case find_matches(pattern, signals, set) do
+      [{match, _number}] -> 
+        new_set = MapSet.to_list(set) ++ String.to_charlist(match)
+
+    end
+  end
+end
+
+A.find_matches(pattern, signals, MapSet.new('cf'))
+```
+
+```elixir
+# filter signals to just those
+# that are uniquely able to be relevant to
+# the pattern
+pattern = Enum.at(patterns, 4)
+IO.inspect(pattern)
+```

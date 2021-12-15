@@ -1,0 +1,222 @@
+# Day 11
+
+## Part 1
+
+```elixir
+input =
+  "
+start-A
+start-b
+A-c
+A-b
+b-d
+A-end
+b-end"
+  |> String.split(["\n", "-"], trim: true)
+  |> Enum.chunk_every(2)
+
+# find every path
+```
+
+```elixir
+input |> Enum.map(&List.to_tuple/1)
+
+# first pass
+## for each path with a 'start': add that path to paths
+
+# second pass
+## starts are done
+## for each path in paths
+##   for each edge in input matching the path end
+## .     add a new longer path with the additional edge 
+##         if it doesn't make the path contain two lowercase caves
+
+# decision: do it all recursively or do a map over everything recursively
+
+defmodule A do
+  def start(input) do
+    paths =
+      Enum.filter(input, fn [a, b] -> "start" in [a, b] end)
+      |> Enum.map(fn
+        ["start", edge] -> ["start", edge]
+        [edge, "start"] -> ["start", edge]
+      end)
+
+    continue(input, paths, 1000)
+  end
+
+  def continue(_, paths, 0) do
+    paths
+  end
+
+  def continue(input, paths, count) do
+    ending_paths = Enum.filter(paths, fn p -> Enum.at(p, -1) == "end" end)
+
+    paths =
+      Enum.flat_map(paths, fn path ->
+        ending = Enum.at(path, -1)
+
+        if ending == "end" do
+          []
+        else
+          edges =
+            Enum.filter(input, fn
+              ["start", _] -> false
+              [a, a] -> false
+              [a, b] -> ending in [a, b]
+            end)
+            |> Enum.map(fn
+              [^ending, edge] -> edge
+              [edge, ^ending] -> edge
+            end)
+            |> Enum.filter(fn e ->
+              code_point = e |> to_charlist |> hd
+              e not in path or code_point < 97
+            end)
+
+          Enum.map(edges, fn e -> path ++ [e] end)
+        end
+      end)
+
+    if Enum.all?(paths, fn path -> Enum.at(path, -1) == "end" end) do
+      # we're done!
+      paths ++ ending_paths
+    else
+      continue(input, paths ++ ending_paths, count - 1)
+    end
+  end
+end
+
+A.start(input)
+```
+
+```elixir
+input =
+  "QF-bw
+end-ne
+po-ju
+QF-lo
+po-start
+XL-ne
+bw-US
+ne-lo
+nu-ne
+bw-po
+QF-ne
+ne-ju
+start-lo
+lo-XL
+QF-ju
+end-ju
+XL-end
+bw-ju
+nu-start
+lo-nu
+nu-XL
+xb-XL
+XL-po"
+  |> String.split(["\n", "-"], trim: true)
+  |> Enum.chunk_every(2)
+
+A.start(input) |> Enum.count()
+```
+
+## Part 2
+
+```elixir
+input =
+  "QF-bw
+end-ne
+po-ju
+QF-lo
+po-start
+XL-ne
+bw-US
+ne-lo
+nu-ne
+bw-po
+QF-ne
+ne-ju
+start-lo
+lo-XL
+QF-ju
+end-ju
+XL-end
+bw-ju
+nu-start
+lo-nu
+nu-XL
+xb-XL
+XL-po"
+  |> String.split(["\n", "-"], trim: true)
+  |> Enum.chunk_every(2)
+```
+
+```elixir
+defmodule A do
+  def start(input) do
+    paths =
+      Enum.filter(input, fn [a, b] -> "start" in [a, b] end)
+      |> Enum.map(fn
+        ["start", edge] -> ["start", edge]
+        [edge, "start"] -> ["start", edge]
+      end)
+
+    continue(input, paths, 1000)
+  end
+
+  def continue(_, paths, 0) do
+    paths
+  end
+
+  def continue(input, paths, count) do
+    ending_paths = Enum.filter(paths, fn p -> Enum.at(p, -1) == "end" end)
+
+    paths =
+      Enum.flat_map(paths, fn path ->
+        ending = Enum.at(path, -1)
+
+        if ending == "end" do
+          []
+        else
+          edges =
+            Enum.filter(input, fn
+              ["start", _] -> false
+              [_, "start"] -> false
+              [a, a] -> false
+              [a, b] -> ending in [a, b]
+            end)
+            |> Enum.map(fn
+              [^ending, edge] -> edge
+              [edge, ^ending] -> edge
+            end)
+            |> Enum.filter(fn e ->
+              code_point = e |> to_charlist |> hd
+              f = Enum.frequencies(path)
+              visited_twice = Enum.filter(f, fn {_k, v} -> v >= 2 end)
+
+              small_cave_visited_twice? =
+                Enum.any?(visited_twice, fn {k, v} ->
+                  hd(to_charlist(k)) >= 97 and v > 1
+                end)
+
+              ok_to_visit_small_cave = !small_cave_visited_twice? or Map.get(f, e, 0) < 1
+
+              code_point < 97 or ok_to_visit_small_cave
+            end)
+
+          Enum.map(edges, fn e -> path ++ [e] end)
+        end
+      end)
+
+    if Enum.all?(paths, fn path -> Enum.at(path, -1) == "end" end) do
+      # we're done!
+      paths ++ ending_paths
+    else
+      continue(input, paths ++ ending_paths, count - 1)
+    end
+  end
+end
+
+A.start(input) |> Enum.count()
+```

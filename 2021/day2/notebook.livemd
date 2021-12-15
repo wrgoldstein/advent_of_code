@@ -1,0 +1,107 @@
+# Advent of Code 2021 Day 2
+
+## Part 1
+
+```elixir
+sample_input = "forward 5
+down 5
+forward 8
+up 3
+down 8
+forward 2" |> String.split("\n")
+```
+
+```elixir
+sample_input
+|> Enum.reduce([0, 0], fn x, [position, depth] ->
+  case x do
+    "forward " <> y ->
+      [position + String.to_integer(y), depth]
+
+    "down " <> y ->
+      [position, depth + String.to_integer(y)]
+
+    "up " <> y ->
+      [position, depth - String.to_integer(y)]
+  end
+end)
+|> Enum.product()
+```
+
+```elixir
+Mix.install([
+  {:httpoison, "~> 1.8"}
+])
+```
+
+```elixir
+require HTTPoison
+
+url = "https://adventofcode.com/2021/day/2/input"
+
+cookie =
+  "_ga=GA1.2.648359719.1638387579; _gid=GA1.2.1442344881.1638387579; session=53616c7465645f5f633f6407b041e04200a5218c6b15131c81e15c83e805325e22b436ec4d4b735352e7c4c4c096ee3f"
+
+headers = [{"Cookie", cookie}]
+{:ok, res} = HTTPoison.get(url, headers)
+
+real_input = res.body |> String.trim() |> String.split("\n")
+```
+
+```elixir
+real_input
+|> Enum.reduce([0, 0], fn x, [position, depth] ->
+  case x do
+    "forward " <> y ->
+      [position + String.to_integer(y), depth]
+
+    "down " <> y ->
+      [position, depth + String.to_integer(y)]
+
+    "up " <> y ->
+      [position, depth - String.to_integer(y)]
+  end
+end)
+|> Enum.product()
+```
+
+```elixir
+real_input
+|> Enum.reduce([0, 0], fn x, [position, depth] ->
+  [verb, y] = String.split(x)
+  y = String.to_integer(y)
+
+  case verb do
+    "forward" ->
+      [position + y, depth]
+
+    "down" ->
+      [position, depth + y]
+
+    "up" ->
+      [position, depth - y]
+  end
+end)
+|> Enum.product()
+```
+
+## Part 2
+
+```elixir
+real_input
+|> Enum.reduce([0, 0, 0], fn x, [position, depth, aim] ->
+  case x do
+    "forward " <> y ->
+      adjustment = String.to_integer(y) * aim
+      [position + String.to_integer(y), depth + adjustment, aim]
+
+    "down " <> y ->
+      [position, depth, aim + String.to_integer(y)]
+
+    "up " <> y ->
+      [position, depth, aim - String.to_integer(y)]
+  end
+end)
+|> Enum.take(2)
+|> Enum.product()
+```
